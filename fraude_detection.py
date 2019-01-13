@@ -6,11 +6,14 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import LinearSVC, SVC
 from pandas import read_csv, concat
 import matplotlib.pyplot as plt
-from math import trunc
+from math import trunc, ceil
 import numpy as np
 from sklearn.preprocessing import scale
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis
+import warnings
+
+warnings.filterwarnings("ignore")
 
 
 class ML(object):
@@ -27,6 +30,8 @@ class ML(object):
         except Exception:
             print('an exception raised while trying to open file ,'
                   ' can you provide a valid csv file path ')
+
+        self.colors = ['red', 'blue', 'orange', 'yellow', 'green', 'black', 'cyan', 'magenta', 'DarkGreen']
 
     def scale_data(self):
         for col in self.data.keys():
@@ -170,10 +175,22 @@ class ML(object):
 
         self.results['QDA'] = result
 
+    def apply_all_algorithms(self):
+        functions = [fct for fct in self.__dir__() if 'apply' in fct and fct != 'apply_all_algorithms']
+        for fct in functions:
+            call_me = self.__getattribute__(fct)
+            call_me()
+
     def plot_curves(self):
         x = [i for i in range(self.flods_number)]
+        min_value = min([min(v) for k, v in self.results.items()])
         with plt.style.context('ggplot'):
+            i = 1
             for k, v in self.results.items():
-                plt.plot(x, v)
+                plt.subplot(ceil(len(self.results) / 4), 4, i)
+                i += 1
+                plt.ylim(min_value, 1.005)
+                plt.plot(x, v, color=self.colors[i-2])
+                plt.title(k)
 
 
