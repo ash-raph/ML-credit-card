@@ -48,7 +48,7 @@ class ML(object):
         res = cross_val_score(dt_classifier, self.data.ix[:, :-1], self.data['Class'], cv=self.flods_number)
         self.results.update({'Decision Tree': res})
 
-    def apply_naif_bayes(self):
+    def base_algo(self, algo):
         flod_size = trunc(len(self.data) / self.flods_number)
         data_keys = list(self.data.keys().difference({'Class'}))
         result = []
@@ -58,122 +58,76 @@ class ML(object):
 
             test = self.data[start:end]
             training = concat([self.data[:start], self.data[end:]])
-
-            gnb = GaussianNB()
-            res = gnb.fit(training[data_keys], training['Class']).predict(test[data_keys])
+            res = algo(training, test, data_keys)
 
             result.append((np.asarray(test['Class']) == res).sum() / (end - start))
 
-        self.results['Naif Bayes'] = result
+        return result
+
+    def apply_naif_bayes(self):
+        def naif_bayes(training, test, data_keys):
+            gnb = GaussianNB()
+            return gnb.fit(training[data_keys], training['Class']).predict(test[data_keys])
+
+        res = self.base_algo(naif_bayes)
+
+        self.results['Naif Bayes'] = res
 
     def apply_linear_svm(self):
-        flod_size = trunc(len(self.data) / self.flods_number)
-        data_keys = list(self.data.keys().difference({'Class'}))
-        result = []
-        for i in range(self.flods_number):
-            start = i * flod_size
-            end = ((i + 1) * flod_size) if i != (self.flods_number - 1) else len(self.data)
-
-            test = self.data[start:end]
-            training = concat([self.data[:start], self.data[end:]])
+        def linear_svm(training, test, data_keys):
             # may be we should scale data
             # https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html
             svc = LinearSVC(max_iter=3000)
-            res = svc.fit(training[data_keys], training['Class']).predict(test[data_keys])
+            return svc.fit(training[data_keys], training['Class']).predict(test[data_keys])
 
-            result.append((np.asarray(test['Class']) == res).sum() / (end - start))
+        res = self.base_algo(linear_svm)
 
-        self.results['Linear SVM'] = result
+        self.results['Linear SVM'] = res
 
     def apply_svm(self):
-        flod_size = trunc(len(self.data) / self.flods_number)
-        data_keys = list(self.data.keys().difference({'Class'}))
-        result = []
-        for i in range(self.flods_number):
-            start = i * flod_size
-            end = ((i + 1) * flod_size) if i != (self.flods_number - 1) else len(self.data)
-
-            test = self.data[start:end]
-            training = concat([self.data[:start], self.data[end:]])
-
+        def svm(training, test, data_keys):
             svc = SVC(gamma='scale')
-            res = svc.fit(training[data_keys], training['Class']).predict(test[data_keys])
+            return svc.fit(training[data_keys], training['Class']).predict(test[data_keys])
 
-            result.append((np.asarray(test['Class']) == res).sum() / (end - start))
+        res = self.base_algo(svm)
 
-        self.results['SVM'] = result
+        self.results['SVM'] = res
 
     def apply_logistic_regression(self):
-        flod_size = trunc(len(self.data) / self.flods_number)
-        data_keys = list(self.data.keys().difference({'Class'}))
-        result = []
-        for i in range(self.flods_number):
-            start = i * flod_size
-            end = ((i + 1) * flod_size) if i != (self.flods_number - 1) else len(self.data)
-
-            test = self.data[start:end]
-            training = concat([self.data[:start], self.data[end:]])
-
+        def logistic_regression(training, test, data_keys):
             lr = LogisticRegression(solver='lbfgs')
-            res = lr.fit(training[data_keys], training['Class']).predict(test[data_keys])
+            return lr.fit(training[data_keys], training['Class']).predict(test[data_keys])
 
-            result.append((np.asarray(test['Class']) == res).sum() / (end - start))
+        res = self.base_algo(logistic_regression)
 
-        self.results['Logistic Regression'] = result
+        self.results['Logistic Regression'] = res
 
     def apply_random_forest(self):
-        flod_size = trunc(len(self.data) / self.flods_number)
-        data_keys = list(self.data.keys().difference({'Class'}))
-        result = []
-        for i in range(self.flods_number):
-            start = i * flod_size
-            end = ((i + 1) * flod_size) if i != (self.flods_number - 1) else len(self.data)
-
-            test = self.data[start:end]
-            training = concat([self.data[:start], self.data[end:]])
-
+        def random_forest(training, test, data_keys):
             rf = RandomForestClassifier(n_estimators=50, max_depth=9)
-            res = rf.fit(training[data_keys], training['Class']).predict(test[data_keys])
+            return rf.fit(training[data_keys], training['Class']).predict(test[data_keys])
 
-            result.append((np.asarray(test['Class']) == res).sum() / (end - start))
+        res = self.base_algo(random_forest)
 
-        self.results['Random Forest'] = result
+        self.results['Random Forest'] = res
 
     def apply_lda(self):
-        flod_size = trunc(len(self.data) / self.flods_number)
-        data_keys = list(self.data.keys().difference({'Class'}))
-        result = []
-        for i in range(self.flods_number):
-            start = i * flod_size
-            end = ((i + 1) * flod_size) if i != (self.flods_number - 1) else len(self.data)
-
-            test = self.data[start:end]
-            training = concat([self.data[:start], self.data[end:]])
-
+        def lda(training, test, data_keys):
             lda = LinearDiscriminantAnalysis()
-            res = lda.fit(training[data_keys], training['Class']).predict(test[data_keys])
+            return lda.fit(training[data_keys], training['Class']).predict(test[data_keys])
 
-            result.append((np.asarray(test['Class']) == res).sum() / (end - start))
+        res = self.base_algo(lda)
 
-        self.results['LDA'] = result
+        self.results['LDA'] = res
 
     def apply_qda(self):
-        flod_size = trunc(len(self.data) / self.flods_number)
-        data_keys = list(self.data.keys().difference({'Class'}))
-        result = []
-        for i in range(self.flods_number):
-            start = i * flod_size
-            end = ((i + 1) * flod_size) if i != (self.flods_number - 1) else len(self.data)
-
-            test = self.data[start:end]
-            training = concat([self.data[:start], self.data[end:]])
-
+        def qda(training, test, data_keys):
             lda = QuadraticDiscriminantAnalysis()
-            res = lda.fit(training[data_keys], training['Class']).predict(test[data_keys])
+            return lda.fit(training[data_keys], training['Class']).predict(test[data_keys])
 
-            result.append((np.asarray(test['Class']) == res).sum() / (end - start))
+        res = self.base_algo(qda)
 
-        self.results['QDA'] = result
+        self.results['QDA'] = res
 
     def apply_all_algorithms(self):
         functions = [fct for fct in self.__dir__() if 'apply' in fct and fct != 'apply_all_algorithms']
@@ -192,5 +146,3 @@ class ML(object):
                 plt.ylim(min_value, 1.005)
                 plt.plot(x, v, color=self.colors[i-2])
                 plt.title(k)
-
-
